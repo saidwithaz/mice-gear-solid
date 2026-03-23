@@ -1,19 +1,30 @@
-/*
-  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
-
-  This software is provided 'as-is', without any express or implied
-  warranty.  In no event will the authors be held liable for any damages
-  arising from the use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-  including commercial applications, and to alter it and redistribute it
-  freely.
-*/
 #define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
+#define MAZE_SIZE 10
+#define OBJECT_SIZE 64
+#define WINDOW_SIZE 640
+#define MOUSE_SPEED 1.0f
+#define CAT_SPEED 25
+#define CAT_CALC_SPEED 1000
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3_image/SDL_image.h>
 #include <pathfinder.h>
+
+struct Object {
+    SDL_Texture* texture;
+    SDL_FRect colliderRect;
+    int value;
+
+    Object(SDL_Texture* t, SDL_FRect c, int v) {
+        texture = t;
+        colliderRect = c;
+        value = v;
+    }
+
+    Object() {
+    }
+};
 
 static SDL_Window* window = NULL;
 static SDL_Renderer* renderer = NULL;
@@ -38,34 +49,14 @@ int MAZE[10][10] = {
     {1, 1, 1, 1, 3, 0, 1, 1, 1, 1}
 };
 
-#define MAZE_SIZE 10
-#define OBJECT_SIZE 64
-#define WINDOW_SIZE 640
-
-
-struct Object {
-    SDL_Texture* texture;
-    SDL_FRect colliderRect;
-    int value;
-
-    Object(SDL_Texture* t, SDL_FRect c, int v) {
-        texture = t;
-        colliderRect = c;
-        value = v;
-    }
-
-    Object() {
-    }
-};
-
 
 std::vector<Object*> objects;        
+Object* cat, * mouse;
 std::vector<std::pair<int, int>> catPath;
-float speed = 0.5f; // Adjust this for movement sensitivity
+
 bool inWalls = false;
 Uint32 delay = 500;
 char inputDir = 'u';
-Object* cat, * mouse;
 
 //cat is element 1
 //mouse is element 0
@@ -217,27 +208,28 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
     int oldCatY = cat->colliderRect.y;
 
     double rotateAngle = 0;
+
+
     if (catPath.empty()) {
         return SDL_APP_SUCCESS;
     }
 
 
-    // 2. Check if keys are held and update position of mouse
     if (keys[SDL_SCANCODE_LEFT]) {
         inputDir = 'l';
-        mouse->colliderRect.x -= speed;
+        mouse->colliderRect.x -= MOUSE_SPEED;
     }
     if (keys[SDL_SCANCODE_RIGHT]) {
         inputDir = 'r';
-        mouse->colliderRect.x += speed;
+        mouse->colliderRect.x += MOUSE_SPEED;
     }
     if (keys[SDL_SCANCODE_UP]) {
         inputDir = 'u';
-        mouse->colliderRect.y -= speed;
+        mouse->colliderRect.y -= MOUSE_SPEED;
     }
     if (keys[SDL_SCANCODE_DOWN]) {
         inputDir = 'd';
-        mouse->colliderRect.y += speed;
+        mouse->colliderRect.y += MOUSE_SPEED;
     }
 
     //check out of bounds
@@ -247,10 +239,9 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
             mouse->colliderRect.y = oldY;
     }
 
-
    
     //check collisions for mouse
-    for (int i = 2; i < objects.size(); i++) {
+    for (int i = 1; i < objects.size(); i++) {
         if (collisionDectector(mouse->colliderRect, objects.at(i)->colliderRect)) {
             switch (objects.at(i)->value ) {
                 case 0:
@@ -283,6 +274,7 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
                     break;
                 case 4:
                     printf("game over :(");
+                    return SDL_APP_SUCCESS;
                     break;
                 case 5:
                     printf("game won!!");
@@ -293,13 +285,13 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
     }
 
     //calculate path to mouse for cat
-    if (timePassed % 1000 == 0) {
+    if (timePassed % CAT_CALC_SPEED == 0) {
         catPath = findPathToMouse({cat->colliderRect.x, cat->colliderRect.y}, { mouse->colliderRect.x, mouse->colliderRect.y }, MAZE);
     }
 
 
     //move cat
-    if (timePassed % 50 == 0 && !inWalls) {
+    if (timePassed % CAT_SPEED == 0 && !inWalls) {
 
 
         cat->colliderRect.x = catPath.front().first;
