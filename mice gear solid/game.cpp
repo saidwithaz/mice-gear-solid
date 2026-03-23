@@ -27,26 +27,20 @@ static SDL_Window* window = NULL;
 static SDL_Renderer* renderer = NULL;
 static SDL_Texture* texture = NULL;
 
-// 0 = blank space
-// 1 = wall
-// 2 = wall with entrance
-// 3 = mouse
-// 4 = cat
-// 5 = cheese
-
-
-
 std::vector<Object*> objects;        
 Object* cat, * mouse;
 std::vector<std::pair<int, int>> catPath;
+double rotateAngle = 0;
 
 bool inWalls = false;
-Uint32 delay = 500;
 char inputDir = 'u';
 
-//cat is element 1
-//mouse is element 0
-
+/* Loads a given texture (sprite).
+* Inputs(s):	const char* textureName  = The file name for the sprite.
+*				SDL_Texture** texturePtr = A pointer that points to where the texture is saved.
+*
+* Returns:		Success if loaded correctly.
+*/
 SDL_AppResult textureLoader(const char* textureName, SDL_Texture** texturePtr) {
     SDL_Texture* texture = IMG_LoadTexture(renderer, textureName);
     if (!texture) {
@@ -60,6 +54,13 @@ SDL_AppResult textureLoader(const char* textureName, SDL_Texture** texturePtr) {
     return SDL_APP_CONTINUE;
 }
 
+
+/* Detect collisions between the mouse and other objects.
+* Inputs(s):	SDL_FRect character  = Contains the coordinate data for the mouse's collision box.
+*				SDL_FRect objs = Contains the coordinate data for the object's collision box.
+*
+* Returns:		Boolean if mouse has collided with object.
+*/
 bool collisionDectector(SDL_FRect character, SDL_FRect obj) {
     int leftChar = character.x;
     int rightChar = character.x + character.w;
@@ -95,11 +96,11 @@ bool collisionDectector(SDL_FRect character, SDL_FRect obj) {
 }
 
 
-/* This function runs once at startup. */
+
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 {
-    /* Create the window */
-    if (!SDL_CreateWindowAndRenderer("Run Mr Rat!", WINDOW_SIZE, WINDOW_SIZE, NULL, &window, &renderer)) {
+    // create window
+    if (!SDL_CreateWindowAndRenderer("Get the cheese!", WINDOW_SIZE, WINDOW_SIZE, NULL, &window, &renderer)) {
         SDL_Log("Couldn't create window and renderer: %s\n", SDL_GetError());
         return SDL_APP_FAILURE;
     }
@@ -193,28 +194,29 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
     int oldCatX = cat->colliderRect.x;
     int oldCatY = cat->colliderRect.y;
 
-    double rotateAngle = 0;
-
 
     if (catPath.empty()) {
         return SDL_APP_SUCCESS;
     }
 
-
     if (keys[SDL_SCANCODE_LEFT]) {
         inputDir = 'l';
+        rotateAngle = 270;
         mouse->colliderRect.x -= MOUSE_SPEED;
     }
     else if (keys[SDL_SCANCODE_RIGHT]) {
         inputDir = 'r';
+        rotateAngle = 90;
         mouse->colliderRect.x += MOUSE_SPEED;
     }
     else if (keys[SDL_SCANCODE_UP]) {
         inputDir = 'u';
+        rotateAngle = 0;
         mouse->colliderRect.y -= MOUSE_SPEED;
     }
     else if (keys[SDL_SCANCODE_DOWN]) {
         inputDir = 'd';
+        rotateAngle = 180;
         mouse->colliderRect.y += MOUSE_SPEED;
     }
 
@@ -248,13 +250,13 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
                         mouse->colliderRect.x -= OBJECT_SIZE * 2;
                         mouse->colliderRect.y = objects.at(i)->colliderRect.y;
                         inWalls = !inWalls;
-                        SDL_Delay(delay);
+                        SDL_Delay(DELAY);
                     }
                     if (inputDir == 'r') {
                         mouse->colliderRect.x += OBJECT_SIZE * 2;
                         mouse->colliderRect.y = objects.at(i)->colliderRect.y;
                         inWalls = !inWalls;
-                        SDL_Delay(delay);
+                        SDL_Delay(DELAY);
                     }
 
                     break;
@@ -284,30 +286,11 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
         catPath.erase(catPath.begin());
     }
 
-    // 
-    //SDL_AssertBreakpoint();
 
-    // clear the screen??
-    //SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black background
     SDL_RenderClear(renderer);
 
     for (int i = 2; i < objects.size(); i++) {
         SDL_RenderTexture(renderer, objects.at(i)->texture, NULL, &objects.at(i)->colliderRect);
-    }
-
-
-    switch (inputDir) {
-        case 'd':
-            rotateAngle = 180;
-            break;
-        case 'l':
-            rotateAngle = 270;
-            break;
-        case 'r':
-            rotateAngle = 90;
-            break;
-        default:
-            rotateAngle = 0;
     }
 
     //cat collisions

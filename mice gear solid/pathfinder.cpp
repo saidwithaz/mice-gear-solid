@@ -63,10 +63,12 @@ std::vector<std::pair<int, int>> findPathToMouse(std::pair<int, int> catPos, std
 		for (auto nextCoord : neighborCoords) {
 			if (!cameFrom.contains(nextCoord)) {
 				int cost = costCalculator(nextCoord, mousePos);
+
 				//TODO: Update smarter pathfinding for cat so it can go around walls better :)
 				//if (maze[nextCoord.first][nextCoord.second] == Tile::WALL) {
 				//	cost -= 1;
-				//} //
+				//}
+
 				frontier.push(std::make_pair(cost, nextCoord));
 				cameFrom[nextCoord] = currentCoord;
 			}
@@ -74,21 +76,21 @@ std::vector<std::pair<int, int>> findPathToMouse(std::pair<int, int> catPos, std
 
 	}
 
-	std::vector<std::pair<int, int>> path;
+	std::vector<std::pair<int, int>> pathFound;
 
 	if (cameFrom.find(mousePos) == cameFrom.end() && catPos != mousePos) {
-		return path;
+		return pathFound;
 	}
 
 	std::pair<int, int> current = mousePos;
 
 	while (current != catPos) {
-		path.push_back(current);
+		pathFound.push_back(current);
 		current = cameFrom[current];
 	}
-	path.push_back(catPos);
+	pathFound.push_back(catPos);
 
-	std::reverse(path.begin(), path.end());
+	std::reverse(pathFound.begin(), pathFound.end());
 
-	return path;
+	return pathFound;
 }
