@@ -1,30 +1,29 @@
-#include <pathfinder.h>
-
 #include <queue>
 #include <map>
+#include <pathfinder.h>
 
-typedef std::pair<int, std::pair<int, int>> queue_item;
 
-std::vector<std::pair<int, int>>  findNeighbors(std::pair<int, int> current, int maze[10][10]) {
+
+std::vector<std::pair<int, int>> findNeighbors(std::pair<int, int> current, const int maze[MAZE_SIZE][MAZE_SIZE]) {
 	std::vector<std::pair<int, int>> neighbors;
 
 	if (current.second != 0 &&
-		maze[current.first][current.second - 1] != 1) {
+		maze[current.first][current.second - 1] != Tile::WALL) {
 		neighbors.push_back(std::make_pair(
 			current.first, current.second - 1)); //left
 	}
-	if (current.second != 10 &&
-		maze[current.first][current.second + 1] != 1) {
+	if (current.second != MAZE_SIZE &&
+		maze[current.first][current.second + 1] != Tile::WALL) {
 		neighbors.push_back(std::make_pair(
 			current.first, current.second + 1)); //right
 	}
 	if (current.first != 0 &&
-		maze[current.first - 1][current.second] != 1) {
+		maze[current.first - 1][current.second] != Tile::WALL) {
 		neighbors.push_back(std::make_pair(
 			current.first - 1, current.second)); //up
 	}
-	if (current.first != 10 &&
-		maze[current.first + 1][current.second] != 1) {
+	if (current.first != MAZE_SIZE &&
+		maze[current.first + 1][current.second] != Tile::WALL) {
 		neighbors.push_back(std::make_pair(
 			current.first + 1, current.second)); //down
 	}
@@ -35,8 +34,6 @@ std::vector<std::pair<int, int>>  findNeighbors(std::pair<int, int> current, int
 
 
 int costCalculator(std::pair<int, int> pos, std::pair<int, int> goal){
-
-
 	float deltaX = abs(pos.first - goal.first);
 	float deltaY = abs(pos.second - goal.second);
 	int distanceToGoal = (deltaX * deltaX) + (deltaY * deltaY);
@@ -44,11 +41,8 @@ int costCalculator(std::pair<int, int> pos, std::pair<int, int> goal){
 	return distanceToGoal;
 }
 
-//idk if we actually change the maze lol...
-//this uses a greedy search
-std::vector<std::pair<int, int>> findPathToMouse(std::pair<int, int> catPos, std::pair<int, int> mousePos, int maze[10][10]) {
 
-
+std::vector<std::pair<int, int>> findPathToMouse(std::pair<int, int> catPos, std::pair<int, int> mousePos, const int maze[10][10]) {
 	std::priority_queue<queue_item, std::vector<queue_item>, std::greater<queue_item>> frontier;
 	frontier.push({ 0, catPos });
 	std::map<std::pair<int, int>, std::pair<int, int>> cameFrom;
@@ -69,6 +63,10 @@ std::vector<std::pair<int, int>> findPathToMouse(std::pair<int, int> catPos, std
 		for (auto nextCoord : neighborCoords) {
 			if (!cameFrom.contains(nextCoord)) {
 				int cost = costCalculator(nextCoord, mousePos);
+				//TODO: Update smarter pathfinding for cat so it can go around walls better :)
+				//if (maze[nextCoord.first][nextCoord.second] == Tile::WALL) {
+				//	cost -= 1;
+				//} //
 				frontier.push(std::make_pair(cost, nextCoord));
 				cameFrom[nextCoord] = currentCoord;
 			}

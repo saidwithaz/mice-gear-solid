@@ -1,15 +1,12 @@
 #define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
-#define MAZE_SIZE 10
-#define OBJECT_SIZE 64
-#define WINDOW_SIZE 640
-#define MOUSE_SPEED 1.0f
-#define CAT_SPEED 25
-#define CAT_CALC_SPEED 1000
+
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3_image/SDL_image.h>
+#include <gameSettings.h>
 #include <pathfinder.h>
+
 
 struct Object {
     SDL_Texture* texture;
@@ -36,18 +33,7 @@ static SDL_Texture* texture = NULL;
 // 3 = mouse
 // 4 = cat
 // 5 = cheese
-int MAZE[10][10] = {
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    {1, 5, 1, 1, 0, 1, 1, 1, 1, 1},
-    {1, 0, 0, 0, 0, 1, 1, 1, 1, 1},
-    {1, 1, 1, 0, 0, 0, 2, 1, 1, 1},
-    {1, 1, 0, 0, 4, 0, 1, 1, 1, 1},
-    {1, 0, 0, 0, 0, 0, 1, 1, 1, 1},
-    {1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
-    {1, 0, 0, 0, 1, 1, 0, 0, 0, 1},
-    {1, 1, 1, 0, 0, 0, 0, 2, 1, 1},
-    {1, 1, 1, 1, 3, 0, 1, 1, 1, 1}
-};
+
 
 
 std::vector<Object*> objects;        
@@ -219,15 +205,15 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
         inputDir = 'l';
         mouse->colliderRect.x -= MOUSE_SPEED;
     }
-    if (keys[SDL_SCANCODE_RIGHT]) {
+    else if (keys[SDL_SCANCODE_RIGHT]) {
         inputDir = 'r';
         mouse->colliderRect.x += MOUSE_SPEED;
     }
-    if (keys[SDL_SCANCODE_UP]) {
+    else if (keys[SDL_SCANCODE_UP]) {
         inputDir = 'u';
         mouse->colliderRect.y -= MOUSE_SPEED;
     }
-    if (keys[SDL_SCANCODE_DOWN]) {
+    else if (keys[SDL_SCANCODE_DOWN]) {
         inputDir = 'd';
         mouse->colliderRect.y += MOUSE_SPEED;
     }
@@ -292,8 +278,6 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
 
     //move cat
     if (timePassed % CAT_SPEED == 0 && !inWalls) {
-
-
         cat->colliderRect.x = catPath.front().first;
         cat->colliderRect.y = catPath.front().second;
 

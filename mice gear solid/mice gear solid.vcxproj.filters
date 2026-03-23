@@ -26,5 +26,8 @@
     <ClInclude Include="pathfinder.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="gameSettings.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

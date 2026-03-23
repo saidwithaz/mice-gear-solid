@@ -136,6 +136,7 @@
     <ClCompile Include="pathfinder.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="gameSettings.h" />
     <ClInclude Include="pathfinder.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

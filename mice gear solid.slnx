@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="mice gear solid/mice gear solid.vcxproj" />
+  <Project Path="mice gear solid/mice gear solid.vcxproj" Id="17e17c92-f066-43bd-94a9-04c72b8f2090" />
 </Solution>
