@@ -10,7 +10,7 @@ constexpr int WINDOW_SIZE = 640;
 *  TODO: rename cat speed??
 */
 constexpr int CAT_CALC_SPEED = 500;
-constexpr int CAT_SPEED = 25;
+constexpr int CAT_SPEED = 15;
 constexpr float MOUSE_SPEED = 0.25f;
 
 constexpr uint32_t DELAY = 500;
@@ -29,6 +29,12 @@ constexpr int MAZE[MAZE_SIZE][MAZE_SIZE] = {
     {1, 1, 1, 0, 0, 0, 0, 2, 1, 1},
     {1, 1, 1, 1, 3, 0, 1, 1, 1, 1}
 };
+
+constexpr const char* gameWinText = "You win!";
+constexpr const char* gameOverText = "You lose... ";
+
+constexpr float scale = 4.0f;
+
 
 enum  Tile
 {
