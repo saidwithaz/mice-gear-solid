@@ -32,7 +32,7 @@ Object* cat, * mouse;
 std::vector<std::pair<int, int>> catPath;
 double rotateAngle = 0;
 
-bool inWalls = false;
+bool inWalls, gameOver, gameWon = false;
 char inputDir = 'u';
 
 /* Loads a given texture (sprite).
@@ -95,6 +95,23 @@ bool collisionDectector(SDL_FRect character, SDL_FRect obj) {
     return true;
 }
 
+void drawMessage(const char* message) {
+    int w = 0, h = 0;
+    float x, y;
+
+    //TODO: fix centering on scaled message?
+    SDL_GetRenderOutputSize(renderer, &w, &h);
+    SDL_SetRenderScale(renderer, scale, scale);
+    x = ((w / scale) - SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * SDL_strlen(message)) / 2;
+    y = ((h / scale) - SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE) / 2;
+
+    //draw
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderDebugText(renderer, x, y, message);
+    SDL_RenderPresent(renderer);
+}
 
 
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
@@ -194,44 +211,46 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
     int oldCatX = cat->colliderRect.x;
     int oldCatY = cat->colliderRect.y;
 
+    if (gameOver) {
+        drawMessage(gameOverText);
+    }
+    else if (gameWon) {
+        drawMessage(gameWinText);
+    }
+    else {
+        if (keys[SDL_SCANCODE_LEFT]) {
+            inputDir = 'l';
+            rotateAngle = 270;
+            mouse->colliderRect.x -= MOUSE_SPEED;
+        }
+        else if (keys[SDL_SCANCODE_RIGHT]) {
+            inputDir = 'r';
+            rotateAngle = 90;
+            mouse->colliderRect.x += MOUSE_SPEED;
+        }
+        else if (keys[SDL_SCANCODE_UP]) {
+            inputDir = 'u';
+            rotateAngle = 0;
+            mouse->colliderRect.y -= MOUSE_SPEED;
+        }
+        else if (keys[SDL_SCANCODE_DOWN]) {
+            inputDir = 'd';
+            rotateAngle = 180;
+            mouse->colliderRect.y += MOUSE_SPEED;
+        }
 
-    if (catPath.empty()) {
-        return SDL_APP_SUCCESS;
-    }
-
-    if (keys[SDL_SCANCODE_LEFT]) {
-        inputDir = 'l';
-        rotateAngle = 270;
-        mouse->colliderRect.x -= MOUSE_SPEED;
-    }
-    else if (keys[SDL_SCANCODE_RIGHT]) {
-        inputDir = 'r';
-        rotateAngle = 90;
-        mouse->colliderRect.x += MOUSE_SPEED;
-    }
-    else if (keys[SDL_SCANCODE_UP]) {
-        inputDir = 'u';
-        rotateAngle = 0;
-        mouse->colliderRect.y -= MOUSE_SPEED;
-    }
-    else if (keys[SDL_SCANCODE_DOWN]) {
-        inputDir = 'd';
-        rotateAngle = 180;
-        mouse->colliderRect.y += MOUSE_SPEED;
-    }
-
-    //check out of bounds
-    if ((mouse->colliderRect.x < 0) || (mouse->colliderRect.y < 0) ||
-        (mouse->colliderRect.x + OBJECT_SIZE > WINDOW_SIZE) || (mouse->colliderRect.y + OBJECT_SIZE > WINDOW_SIZE)){
+        //check out of bounds
+        if ((mouse->colliderRect.x < 0) || (mouse->colliderRect.y < 0) ||
+            (mouse->colliderRect.x + OBJECT_SIZE > WINDOW_SIZE) || (mouse->colliderRect.y + OBJECT_SIZE > WINDOW_SIZE)) {
             mouse->colliderRect.x = oldX;
             mouse->colliderRect.y = oldY;
-    }
+        }
 
-   
-    //check collisions for mouse
-    for (int i = 1; i < objects.size(); i++) {
-        if (collisionDectector(mouse->colliderRect, objects.at(i)->colliderRect)) {
-            switch (objects.at(i)->value ) {
+
+        //check collisions for mouse
+        for (int i = 1; i < objects.size(); i++) {
+            if (collisionDectector(mouse->colliderRect, objects.at(i)->colliderRect)) {
+                switch (objects.at(i)->value) {
                 case 0:
                     if (inWalls) {
                         mouse->colliderRect.x = oldX;
@@ -261,67 +280,72 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
 
                     break;
                 case 4:
-                    printf("game over :(");
-                    return SDL_APP_SUCCESS;
+                    gameOver = true;
                     break;
                 case 5:
-                    printf("game won!!");
+                    gameWon = true;
                     break;
 
+                }
             }
         }
-    }
 
-    //calculate path to mouse for cat
-    if (timePassed % CAT_CALC_SPEED == 0) {
-        catPath = findPathToMouse({cat->colliderRect.x, cat->colliderRect.y}, { mouse->colliderRect.x, mouse->colliderRect.y }, MAZE);
-    }
-
-
-    //move cat
-    if (timePassed % CAT_SPEED == 0 && !inWalls) {
-        cat->colliderRect.x = catPath.front().first;
-        cat->colliderRect.y = catPath.front().second;
-
-        catPath.erase(catPath.begin());
-    }
+        //calculate path to mouse for cat
+        if (timePassed % CAT_CALC_SPEED == 0) {
+            catPath = findPathToMouse({ cat->colliderRect.x, cat->colliderRect.y }, { mouse->colliderRect.x, mouse->colliderRect.y }, MAZE);
+        }
 
 
-    SDL_RenderClear(renderer);
+        //move cat
+        if (timePassed % CAT_SPEED == 0 && !inWalls) {
+            cat->colliderRect.x = catPath.front().first;
+            cat->colliderRect.y = catPath.front().second;
 
-    for (int i = 2; i < objects.size(); i++) {
-        SDL_RenderTexture(renderer, objects.at(i)->texture, NULL, &objects.at(i)->colliderRect);
-    }
+            catPath.erase(catPath.begin());
+        }
 
-    //cat collisions
-    for (int i = 2; i < objects.size(); i++) {
-        if (collisionDectector(cat->colliderRect, objects.at(i)->colliderRect)) {
-            switch (objects.at(i)->value) {
-            case 1:
-                cat->colliderRect.x = oldCatX;
-                cat->colliderRect.y = oldCatY;
-                break;
-            case 2:
-                cat->colliderRect.x = oldCatX;
-                cat->colliderRect.y = oldCatY;
-                break;
-            case 4:
-                printf("game over :(");
-                break;
+
+        SDL_RenderClear(renderer);
+
+        for (int i = 2; i < objects.size(); i++) {
+            SDL_RenderTexture(renderer, objects.at(i)->texture, NULL, &objects.at(i)->colliderRect);
+        }
+
+        //cat collisions
+        for (int i = 2; i < objects.size(); i++) {
+            if (collisionDectector(cat->colliderRect, objects.at(i)->colliderRect)) {
+                switch (objects.at(i)->value) {
+                case 1:
+                    cat->colliderRect.x = oldCatX;
+                    cat->colliderRect.y = oldCatY;
+                    break;
+                case 2:
+                    cat->colliderRect.x = oldCatX;
+                    cat->colliderRect.y = oldCatY;
+                    break;
+                case 4:
+                    printf("game over :(");
+                    break;
+                }
             }
         }
+
+        if (catPath.empty()) {
+            gameOver = true;
+        }
+
+
+
+        SDL_RenderTextureRotated(renderer, mouse->texture, NULL, &mouse->colliderRect, rotateAngle, NULL, SDL_FLIP_NONE);
+
+
+        SDL_RenderTexture(renderer, cat->texture, NULL, &cat->colliderRect);
+        SDL_RenderTexture(renderer, objects.at(2)->texture, NULL, &objects.at(2)->colliderRect);
+
+
+        SDL_RenderPresent(renderer);
+
     }
-
-
-
-    SDL_RenderTextureRotated(renderer, mouse->texture, NULL, &mouse->colliderRect, rotateAngle, NULL, SDL_FLIP_NONE);
-
-
-    SDL_RenderTexture(renderer, cat->texture, NULL, &cat->colliderRect);
-    SDL_RenderTexture(renderer, objects.at(2)->texture, NULL, &objects.at(2)->colliderRect);
-
-    
-    SDL_RenderPresent(renderer);
 
     return SDL_APP_CONTINUE;
 }
