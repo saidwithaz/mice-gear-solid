@@ -42,7 +42,7 @@ int costCalculator(std::pair<int, int> pos, std::pair<int, int> goal){
 }
 
 
-std::vector<std::pair<int, int>> findPathToMouse(std::pair<int, int> catPos, std::pair<int, int> mousePos, const int maze[10][10]) {
+std::vector<std::pair<int, int>> findPathToMouse(std::pair<int, int> catPos, std::pair<int, int> mousePos, const int maze[MAZE_SIZE][MAZE_SIZE]) {
 	std::priority_queue<queue_item, std::vector<queue_item>, std::greater<queue_item>> frontier;
 	frontier.push({ 0, catPos });
 	std::map<std::pair<int, int>, std::pair<int, int>> cameFrom;

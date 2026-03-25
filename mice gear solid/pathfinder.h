@@ -1,21 +1,10 @@
 #pragma once
 
 #include <utility>
-#include <vector>
 #include <gameSettings.h>
 
 
 typedef std::pair<int, std::pair<int, int>> queue_item;
-
-
-/* Calculates a path from the cat to the mouse using a simple greedy search algorithm.
-* Inputs(s):	std::pair<int, int> catPos  = The cat's current 2D coordinates.
-*				std::pair<int, int> mousePos = The mouse's current 2D coordinates.
-*				const int maze[10][10] = A simple representation of the maze.
-* 
-* Returns:		A list of coordinates that provides the path from cat to mouse.
-*/
-std::vector<std::pair<int, int>> findPathToMouse(std::pair<int, int> catPos, std::pair<int, int> mousePos, const int maze[MAZE_SIZE][MAZE_SIZE]);
 
 
 /* Finds traversable neighboring tiles for a given tile.
@@ -38,3 +27,12 @@ std::vector<std::pair<int, int>> findNeighbors(std::pair<int, int> current, cons
 * Returns:		The shortest distance between the two coordinates (squared for effiicent calculation).
 */
 int costCalculator(std::pair<int, int> pos, std::pair<int, int> goal);
+
+/* Calculates a path from the cat to the mouse using a simple greedy search algorithm.
+* Inputs(s):	std::pair<int, int> catPos  = The cat's current 2D coordinates.
+*				std::pair<int, int> mousePos = The mouse's current 2D coordinates.
+*				const int maze[10][10] = A simple representation of the maze.
+*
+* Returns:		A list of coordinates that provides the path from cat to mouse.
+*/
+std::vector<std::pair<int, int>> findPathToMouse(std::pair<int, int> catPos, std::pair<int, int> mousePos, const int maze[MAZE_SIZE][MAZE_SIZE]);
