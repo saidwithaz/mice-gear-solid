@@ -1,7 +1,7 @@
 #define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
 
-#include <SDL3/SDL_main.h>
-#include <pathfinder.h>
+#include "SDL3/SDL_main.h"
+#include "pathfinder.h"
 
 
 /* Loads a given texture (sprite).

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <utility>
-#include <gameSettings.h>
+#include "gameSettings.h"
 
 
 typedef std::pair<int, std::pair<int, int>> queue_item;

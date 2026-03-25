@@ -1,7 +1,7 @@
 #pragma once
 
-#include <SDL3/SDL.h>
-#include <SDL3_image/SDL_image.h>
+#include "SDL3/SDL.h"
+#include "SDL3_image/SDL_image.h"
 #include <vector>
 
 /* Defines global settings and constants for the game.
@@ -14,8 +14,8 @@ constexpr int WINDOW_SIZE = 640;
 *  TODO: rename cat speed??
 */
 constexpr int CAT_CALC_SPEED = 500;
-constexpr int CAT_SPEED = 15;
-constexpr float MOUSE_SPEED = 0.25f;
+constexpr int CAT_SPEED = 25;
+constexpr float MOUSE_SPEED = 0.175f;
 
 constexpr uint32_t DELAY = 500;
 
@@ -30,8 +30,8 @@ constexpr int MAZE[MAZE_SIZE][MAZE_SIZE] = {
     {1, 1, 1, 0, 0, 0, 2, 1, 1, 1},
     {1, 1, 0, 0, 4, 0, 1, 1, 1, 1},
     {1, 0, 0, 0, 0, 0, 0, 1, 1, 1},
-    {1, 0, 1, 1, 1, 1, 0, 0, 0, 1},
-    {1, 0, 0, 0, 1, 0, 0, 0, 0, 1},
+    {1, 0, 1, 1, 1, 1, 0, 0, 1, 1},
+    {1, 0, 0, 0, 1, 0, 0, 0, 1, 1},
     {1, 1, 1, 0, 0, 0, 0, 2, 1, 1},
     {1, 1, 1, 1, 3, 0, 1, 1, 1, 1}
 };
