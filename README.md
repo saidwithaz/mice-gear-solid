@@ -4,7 +4,7 @@ The cat uses a greedy algorithm to track the mouse. The mouse can enter holes in
 
 ### SET UP ###
 
-You can download the exe application from the zip file in releases or here **insert itch io link*.
+You can download the exe application from the zip file "mice gear solid-release.zip" or here **insert itch io link*.
 
 ### CONTROLS ###
 
