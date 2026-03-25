@@ -1,7 +1,7 @@
 #pragma once
 
+
 /* Defines global settings and constants for the game. 
-*  The following shouldn't really be changed...
 */
 constexpr int OBJECT_SIZE = 64;
 constexpr int WINDOW_SIZE = 640;

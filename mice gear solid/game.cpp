@@ -23,17 +23,19 @@ struct Object {
     }
 };
 
+
 static SDL_Window* window = NULL;
 static SDL_Renderer* renderer = NULL;
 static SDL_Texture* texture = NULL;
 
-std::vector<Object*> objects;        
+Object objects[MAZE_SIZE*MAZE_SIZE];        
 Object* cat, * mouse;
 std::vector<std::pair<int, int>> catPath;
 double rotateAngle = 0;
 
-bool inWalls, gameOver, gameWon = false;
+bool inWalls = false, gameOver = false, gameWon = false;
 char inputDir = 'u';
+
 
 /* Loads a given texture (sprite).
 * Inputs(s):	const char* textureName  = The file name for the sprite.
@@ -61,7 +63,7 @@ SDL_AppResult textureLoader(const char* textureName, SDL_Texture** texturePtr) {
 *
 * Returns:		Boolean if mouse has collided with object.
 */
-bool collisionDectector(SDL_FRect character, SDL_FRect obj) {
+static bool collisionDetector(SDL_FRect character, SDL_FRect obj) {
     int leftChar = character.x;
     int rightChar = character.x + character.w;
     int topChar = character.y;
@@ -95,7 +97,13 @@ bool collisionDectector(SDL_FRect character, SDL_FRect obj) {
     return true;
 }
 
-void drawMessage(const char* message) {
+
+/* Draws a simple text message to fill the screen when the game is won or lost collisions.
+* Inputs(s):	const char* message = The message to be displayed.
+*
+* Returns:		None.
+*/
+static void drawMessage(const char* message) {
     int w = 0, h = 0;
     float x, y;
 
@@ -105,7 +113,6 @@ void drawMessage(const char* message) {
     x = ((w / scale) - SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * SDL_strlen(message)) / 2;
     y = ((h / scale) - SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE) / 2;
 
-    //draw
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
@@ -123,64 +130,60 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
     }
 
     int currX = 0, currY = 0;
-    std::vector<SDL_Texture*> textures;
-    SDL_Texture** texturePtr = new SDL_Texture*;
+    SDL_Texture* textures[6];
+    SDL_Texture* texture = NULL;
 
-    textureLoader("floor.png", texturePtr);
-    textures.push_back(*texturePtr);
-    textureLoader("brick walls.png", texturePtr);
-    textures.push_back(*texturePtr);
-    textureLoader("enter walls.png", texturePtr);
-    textures.push_back(*texturePtr);
-    textureLoader("mouse guy.png", texturePtr);
-    textures.push_back(*texturePtr);
-    textureLoader("cat creature.png", texturePtr);
-    textures.push_back(*texturePtr);
-    textureLoader("cheese reward.png", texturePtr);
-    textures.push_back(*texturePtr);
+    textureLoader("floor.png", &texture);
+    textures[FLOOR] = texture;
+    textureLoader("brick walls.png", &texture);
+    textures[WALL] = texture;
+    textureLoader("enter walls.png", &texture);
+    textures[ENTRANCE] = texture;
+    textureLoader("mouse guy.png", &texture);
+    textures[MOUSE] = texture;
+    textureLoader("cat creature.png", &texture);
+    textures[CAT] = texture;
+    textureLoader("cheese reward.png", &texture);
+    textures[CHEESE] = texture;
 
-    delete texturePtr;
     int mazeVal = 0;
+    int objectIndex = 0;
 
 
     for (int i = 0; i < MAZE_SIZE; i++) {
         currX = 0;
         for (int j = 0; j < MAZE_SIZE; j++) {
             mazeVal = MAZE[i][j];
-            SDL_Texture* objTexture = textures.at(mazeVal);
             SDL_FRect dstRect = { currX, currY, OBJECT_SIZE, OBJECT_SIZE };
 
-            Object* object = new Object(objTexture, dstRect, mazeVal);
-            if (mazeVal > 2) {
-                objects.insert(objects.begin(), object);
-                if (mazeVal == 3) {
-                    mouse = object;
-                }
-                if (mazeVal == 4) {
-                    cat = object;
-                }
-                
+            Object object = Object(textures[mazeVal], dstRect, mazeVal);
+            if (mazeVal == Tile::MOUSE) {
 
-                SDL_Texture* floorTexture = textures.at(0);
-                Object* object = new Object(floorTexture, dstRect, 0);
-                objects.push_back(object);
+                mouse = new Object(textures[mazeVal], dstRect, mazeVal);
+
+                object = Object(textures[FLOOR], dstRect, 0);
+
+                SDL_RenderTexture(renderer, textures[FLOOR], NULL, &dstRect);
+            }
+            if (mazeVal == Tile::CAT) {
+                cat = new Object(textures[mazeVal], dstRect, mazeVal);
+
+                SDL_Texture* floorTexture = textures[FLOOR];
+                object = Object(floorTexture, dstRect, 0);
 
                 SDL_RenderTexture(renderer, floorTexture, NULL, &dstRect);
-
-            }
-            else {
-                //TODO: floor tiles are currently added as objects also, part of bg problem
-
-                objects.push_back(object);
             }
 
+            objects[objectIndex] = object;
 
-            SDL_RenderTexture(renderer, objTexture, NULL, &dstRect);
+            SDL_RenderTexture(renderer, textures[mazeVal], NULL, &dstRect);
 
             currX += OBJECT_SIZE;
+            objectIndex++;
         }
         currY += OBJECT_SIZE;
     }
+
     catPath = findPathToMouse({ cat->colliderRect.x, cat->colliderRect.y }, { mouse->colliderRect.x, mouse->colliderRect.y }, MAZE);
 
 
@@ -189,17 +192,17 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
     return SDL_APP_CONTINUE;
 }
 
+
 /* This function runs when a new event (mouse input, keypresses, etc) occurs. */
 SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 {
-
-
     if (event->type == SDL_EVENT_QUIT) {
         return SDL_APP_SUCCESS;  /* end the program, reporting success to the OS. */
     }
 
     return SDL_APP_CONTINUE;
 }
+
 
 /* This function runs once per frame. */
 SDL_AppResult SDL_AppIterate(void* appstate) {
@@ -246,43 +249,38 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
             mouse->colliderRect.y = oldY;
         }
 
-
         //check collisions for mouse
-        for (int i = 1; i < objects.size(); i++) {
-            if (collisionDectector(mouse->colliderRect, objects.at(i)->colliderRect)) {
-                switch (objects.at(i)->value) {
-                case 0:
+        for (int i = 0; i < MAZE_SIZE*MAZE_SIZE; i++) {
+            if (collisionDetector(mouse->colliderRect, objects[i].colliderRect)) {
+                switch (objects[i].value) {
+                case FLOOR:
                     if (inWalls) {
                         mouse->colliderRect.x = oldX;
                         mouse->colliderRect.y = oldY;
                     }
                     break;
-                case 1:
+                case WALL:
                     if (!inWalls) {
                         mouse->colliderRect.x = oldX;
                         mouse->colliderRect.y = oldY;
                     }
                     break;
-                case 2:
-
+                case ENTRANCE:
                     if (inputDir == 'l') {
                         mouse->colliderRect.x -= OBJECT_SIZE * 2;
-                        mouse->colliderRect.y = objects.at(i)->colliderRect.y;
+                        mouse->colliderRect.y = objects[i].colliderRect.y;
                         inWalls = !inWalls;
                         SDL_Delay(DELAY);
                     }
                     if (inputDir == 'r') {
                         mouse->colliderRect.x += OBJECT_SIZE * 2;
-                        mouse->colliderRect.y = objects.at(i)->colliderRect.y;
+                        mouse->colliderRect.y = objects[i].colliderRect.y;
                         inWalls = !inWalls;
                         SDL_Delay(DELAY);
                     }
 
                     break;
-                case 4:
-                    gameOver = true;
-                    break;
-                case 5:
+                case CHEESE:
                     gameWon = true;
                     break;
 
@@ -291,6 +289,7 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
         }
 
         //calculate path to mouse for cat
+        //TODO: change to deltaTime
         if (timePassed % CAT_CALC_SPEED == 0) {
             catPath = findPathToMouse({ cat->colliderRect.x, cat->colliderRect.y }, { mouse->colliderRect.x, mouse->colliderRect.y }, MAZE);
         }
@@ -307,42 +306,34 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
 
         SDL_RenderClear(renderer);
 
-        for (int i = 2; i < objects.size(); i++) {
-            SDL_RenderTexture(renderer, objects.at(i)->texture, NULL, &objects.at(i)->colliderRect);
+        for (int i = 0; i < MAZE_SIZE*MAZE_SIZE; i++) {
+            SDL_RenderTexture(renderer, objects[i].texture, NULL, &objects[i].colliderRect);
         }
 
         //cat collisions
-        for (int i = 2; i < objects.size(); i++) {
-            if (collisionDectector(cat->colliderRect, objects.at(i)->colliderRect)) {
-                switch (objects.at(i)->value) {
-                case 1:
-                    cat->colliderRect.x = oldCatX;
-                    cat->colliderRect.y = oldCatY;
-                    break;
-                case 2:
-                    cat->colliderRect.x = oldCatX;
-                    cat->colliderRect.y = oldCatY;
-                    break;
-                case 4:
-                    printf("game over :(");
-                    break;
+        for (int i = 0; i < MAZE_SIZE*MAZE_SIZE; i++) {
+            if (collisionDetector(cat->colliderRect, objects[i].colliderRect)) {
+                switch (objects[i].value) {
+                    case WALL:
+                    case ENTRANCE:
+                        cat->colliderRect.x = oldCatX;
+                        cat->colliderRect.y = oldCatY;
+                        break;
                 }
             }
         }
 
         if (catPath.empty()) {
+            catPath = findPathToMouse({ cat->colliderRect.x, cat->colliderRect.y }, { mouse->colliderRect.x, mouse->colliderRect.y }, MAZE);
+        }
+
+        if (collisionDetector(cat->colliderRect, mouse->colliderRect)) {
             gameOver = true;
         }
 
 
-
         SDL_RenderTextureRotated(renderer, mouse->texture, NULL, &mouse->colliderRect, rotateAngle, NULL, SDL_FLIP_NONE);
-
-
         SDL_RenderTexture(renderer, cat->texture, NULL, &cat->colliderRect);
-        SDL_RenderTexture(renderer, objects.at(2)->texture, NULL, &objects.at(2)->colliderRect);
-
-
         SDL_RenderPresent(renderer);
 
     }
@@ -353,7 +344,6 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
 /* This function runs once at shutdown. */
 void SDL_AppQuit(void* appstate, SDL_AppResult result)
 {
-    for (Object* object : objects) {
-        delete object;
-    }
+    delete mouse;
+    delete cat;
 }
