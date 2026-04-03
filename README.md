@@ -16,6 +16,8 @@ Win the game by reaching the cheese at the end of the maze. The game is over if 
 
 ### TODO ###
 
+*Port to web.
+
 *Adjust cat movement.
 
 *Add restart option.
